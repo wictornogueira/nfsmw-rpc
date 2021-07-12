@@ -10,64 +10,47 @@ using namespace std;
 using namespace utils;
 
 static void format_state (char* state, char length) {
-  if (*C_CAR_PTR < 0) {
+  if (*C_CAR_PTR < 0 || *CARS_ADDR_PTR == 0 || *OPT_ADDR_PRT == 0) {
     state[0] = 0;
     return;
   }
 
-  const int car_addr = (*CARS_ADDR_PTR + (*C_CAR_PTR * 0x890));
-  const char* const car_name = (char*)(car_addr + 0x20);
-  
+  char c_mode = *(char*)(*OPT_ADDR_PRT + 0x12C);
+  switch (c_mode) {
+    case 1:
+    case 4:
+      break;
+    default:
+      state[0] = 0;
+      return;
+  }
+
+  const int car_addr = (*CARS_ADDR_PTR + (*C_CAR_PTR * 0xD0));
+  const char* const car_name = (char*)(car_addr + 0x10);
+
   const auto car_itr = CAR_TABLE.find(car_name);
+
   if (car_itr != CAR_TABLE.end()) {
     sprintf_s(state, length, "%s", car_itr->second);
   } else {
-    const char* const car_brand = (char*)(car_addr + 0xC0);
+    const char* const car_brand = (char*)(car_addr + 0x40);
     sprintf_s(state, length, "%s %s", car_brand, car_name);
   }
 }
 
 static void format_details (char* details, char length) {
-  switch (*C_TRACK_PTR) {
-    case 0:
-    case 2000:
-      sprintf_s(details, length, (*LBBY_NAME_PTR == 0) ? IN_MENU : IN_LOBBY);
+  if (*OPT_ADDR_PRT == 0) { return; }
+
+  char c_mode = *(char*)(*OPT_ADDR_PRT + 0x12C);
+  switch (c_mode) {
+    case 4:
+      sprintf_s(details, length, "Quick Race");
       break;
-    case 4000:
-      sprintf_s(details, length, GM_EXPLORER);
+    case 1:
+      sprintf_s(details, length, "Career");
       break;
-    default: {
-      const char* mode;
-
-      switch (*C_TRACK_PTR / 100) {
-        case 40:
-          mode = GM_CIRCUIT;
-          break;
-        case 41:
-          mode = (*C_TRACK_PTR >= 4174) ? GM_DRIFT : GM_SPRINT;
-          break;
-        case 43:
-          mode = GM_DRIFT;
-          break;
-        case 42:
-        case 44:
-          mode = GM_DRAG;
-          break;
-        case 46:
-          mode = GM_STREET_X;
-          break;
-        case 47:
-          mode = GM_URL;
-          break;
-        default:
-          mode = GM_UNKNOWN;
-      }
-
-      const auto track_itr = TRACK_TABLE.find(*C_TRACK_PTR);
-      const char* const track_name = track_itr != TRACK_TABLE.end() ? track_itr->second : UNK_TRACK;
-
-      sprintf_s(details, length, (*LBBY_NAME_PTR == 0) ? "%s - %s" : "%s - %s (LAN)", mode, track_name);
-    }
+    default:
+      sprintf_s(details, length, IN_MENU);
   }
 }
 
@@ -86,6 +69,8 @@ static DWORD WINAPI ThreadEntry (LPVOID lpParam) {
 
   discord_presence.state = state;
   discord_presence.details = details;
+
+  details[0] = 0;
 
   while (1) {
     format_details(details, sizeof(details));
