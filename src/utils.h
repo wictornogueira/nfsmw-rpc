@@ -38,5 +38,6 @@ namespace utils {
     {"FORDGT", " Ford GT"},
     {"SLR", "Mercedes-Benz SLR McLaren"},
     {"CARRERAGT", "Porsche Carrera GT"},
+    {"BMWM3GTRE46", "BMW M3 GTR"},
   };
 }
