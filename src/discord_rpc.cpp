@@ -19,6 +19,7 @@ static void format_state (char* state, char length) {
   switch (c_mode) {
     case 1:
     case 4:
+    case 33:
       break;
     default:
       state[0] = 0;
@@ -48,6 +49,9 @@ static void format_details (char* details, char length) {
       break;
     case 1:
       sprintf_s(details, length, "Career");
+      break;
+    case 33:
+      sprintf_s(details, length, "Customization Shop");
       break;
     default:
       sprintf_s(details, length, IN_MENU);
